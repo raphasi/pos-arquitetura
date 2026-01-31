@@ -85,7 +85,7 @@ Em produção, separe por domínio (facilita RBAC, custos, operação e governan
 |---|---|---|
 | `rg-shared-observ-...` | Log Analytics, App Insights (Front/API), alertas | operação e telemetria compartilhadas |
 | `rg-shared-appsvc-...` | App Service Plan (compute compartilhado) | custo/compute centralizado + governança por plataforma |
-| `rg-erp-front-...` | WebApp Front do ERP | ciclo de vida e permissões do front ERP |
+| `rg-erp-front-...` | Virtual Machine Front do ERP | ciclo de vida e permissões do front ERP |
 | `rg-erp-api-...` | WebApp API do ERP | ciclo de vida e permissões da API ERP |
 | `rg-ecom-front-...` | WebApp Front do Ecommerce | ciclo de vida e permissões do front Ecommerce |
 | `rg-ecom-api-...` | WebApp API do Ecommerce | ciclo de vida e permissões da API Ecommerce |
