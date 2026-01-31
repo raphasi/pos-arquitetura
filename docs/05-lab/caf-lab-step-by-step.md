@@ -1,25 +1,30 @@
-# CAF na prática — Aula Produção (ERP) com 1 Subscription (Canada Central)
+# CAF na prática — Aula Produção (ERP + Ecommerce) com 1 Subscription (Canada Central)
 
-Este documento reúne um **passo a passo completo** para uma aula prática baseada no **Cloud Adoption Framework (CAF)**, aplicando **taxonomia/naming**, **tags**, **Azure Policy**, **grupos no Entra ID** e **RBAC** em um cenário de ERP.
+Este documento reúne um **passo a passo completo** para uma aula prática baseada no **Cloud Adoption Framework (CAF)**, aplicando **taxonomia/naming**, **tags**, **Azure Policy**, **grupos no Entra ID** e **RBAC** em um cenário com **duas aplicações** compartilhando capacidade de compute.
 
 > **Cenário (Produção)**
 > - Região base: **Canada Central**
 > - 1 Subscription
-> - 1 App Service Plan
-> - 2 WebApps: **Frontend** e **Backend/API**
-> - 1 Azure SQL Database (SQL Server + DB)
-> - Observabilidade: Log Analytics + App Insights
+> - **1 App Service Plan (Shared)** para reduzir custo (compute compartilhado)
+> - 4 WebApps: **ERP Front**, **ERP API**, **Ecommerce Front**, **Ecommerce API**
+> - **Dados separados por workload** (para rastreio de custos/governança):
+>   - ERP: Azure SQL Server + DB
+>   - Ecommerce: Azure SQL Server + DB
+> - Observabilidade: Log Analytics + App Insights (shared)
 > - Rede (opcional): VNet/Subnets/NSG/Private Endpoint
 
 ---
 
 ## 1) Parâmetros do ambiente (padronização)
 
-- `workload = erp`
 - `env = prod`
 - `region_short = cac` *(Canada Central)*
 - `region_code = canadacentral`
 - `instance = 001`
+
+Workloads do laboratório:
+- `workload_1 = erp`
+- `workload_2 = ecom` *(ecommerce)*
 
 ---
 
@@ -33,42 +38,58 @@ Este documento reúne um **passo a passo completo** para uma aula prática basea
 **Com purpose (quando necessário):**
 - `<abbr>-<workload>-<purpose>-<env>-<region>-<nn>`
 
-**Exemplos rápidos:**
-- `rg-erp-front-prod-cac-001`
-- `app-erp-front-prod-cac-001`
-- `app-erp-api-prod-cac-001`
-- `sqldb-erp-prod-cac-001`
+**Importante (shared):**
+- Recursos **compartilhados** não devem “pertencer” a um workload no nome.
+- Para shared, use `shared` no lugar do workload.
+
+Exemplos rápidos:
+- `rg-shared-appsvc-prod-cac-001`
+- `rg-asp-shared-prod-cac-001`
+- `rg-app-erp-front-prod-cac-001`
+- `rg-app-ecom-api-prod-cac-001`
+- `rg-sqldb-erp-prod-cac-001`
+- `rg-sqldb-ecom-prod-cac-001`
 
 ---
 
 ## 3) Estrutura recomendada de Resource Groups (produção)
 
-Em produção, separe por domínio (facilita RBAC, custos, operação e governança).
+Em produção, separe por domínio (facilita RBAC, custos, operação e governança) e trate **compute compartilhado** como **shared**.
 
 ### 3.1 Resource Groups
 
-1) **Shared / Observability**
-- `rg-erp-shared-prod-cac-001`
+**Shared / Plataforma**
+- `rg-shared-observ-prod-cac-001` *(observabilidade)*
+- `rg-shared-appsvc-prod-cac-001` *(App Service Plan compartilhado)*
 
-2) **Apps**
+**Apps — ERP**
 - `rg-erp-front-prod-cac-001`
 - `rg-erp-api-prod-cac-001`
 
-3) **Dados**
-- `rg-erp-data-prod-cac-001`
+**Apps — Ecommerce**
+- `rg-ecom-front-prod-cac-001`
+- `rg-ecom-api-prod-cac-001`
 
-4) **Rede (recomendado em prod; opcional para aula curta)**
-- `rg-erp-net-prod-cac-001`
+**Dados (separados por custo/governança)**
+- `rg-erp-data-prod-cac-001`
+- `rg-ecom-data-prod-cac-001`
+
+**Rede (recomendado em prod; opcional para aula curta)**
+- `rg-shared-net-prod-cac-001`
 
 ### 3.2 O que vai em cada RG
 
 | Resource Group | Conteúdo típico | Por que separar |
 |---|---|---|
-| `rg-erp-shared-...` | Log Analytics, App Insights, Key Vault (opcional) | operação e telemetria compartilhadas |
-| `rg-erp-front-...` | App Service Plan + WebApp Front | ciclo de vida e permissões do front |
-| `rg-erp-api-...` | WebApp API/Backend | ciclo de vida e permissões da API |
-| `rg-erp-data-...` | SQL Server + SQL DB + diagnósticos | domínio de dados exige controles mais rígidos |
-| `rg-erp-net-...` | VNet/Subnets/NSG/Private Endpoint/DNS | rede costuma ser operada por time específico |
+| `rg-shared-observ-...` | Log Analytics, App Insights (Front/API), alertas | operação e telemetria compartilhadas |
+| `rg-shared-appsvc-...` | App Service Plan (compute compartilhado) | custo/compute centralizado + governança por plataforma |
+| `rg-erp-front-...` | WebApp Front do ERP | ciclo de vida e permissões do front ERP |
+| `rg-erp-api-...` | WebApp API do ERP | ciclo de vida e permissões da API ERP |
+| `rg-ecom-front-...` | WebApp Front do Ecommerce | ciclo de vida e permissões do front Ecommerce |
+| `rg-ecom-api-...` | WebApp API do Ecommerce | ciclo de vida e permissões da API Ecommerce |
+| `rg-erp-data-...` | SQL Server + SQL DB do ERP | controle e custo do ERP bem segregados |
+| `rg-ecom-data-...` | SQL Server + SQL DB do Ecommerce | controle e custo do Ecommerce bem segregados |
+| `rg-shared-net-...` | VNet/Subnets/NSG/Private Endpoint/DNS | rede costuma ser operada por time específico |
 
 ---
 
@@ -78,10 +99,10 @@ Em produção, separe por domínio (facilita RBAC, custos, operação e governan
 
 ### 4.1 Tags obrigatórias (prod)
 
-- `Application=erp`
+- `Application=erp|ecom|shared`
 - `Environment=prod`
-- `Owner=platform-team` *(ou `time-erp`)*
-- `CostCenter=cc-erp-001` *(ajuste para o seu caso)*
+- `Owner=platform-team` *(ou `time-erp` / `time-ecom` por workload)*
+- `CostCenter=...` *(ajuste para o seu caso)*
 - `ManagedBy=iac` *(recomendado em prod; ou `manual` se for aula via portal)*
 - `DataClassification=confidential` *(ou `internal`)*
 - `Criticality=high`
@@ -90,32 +111,65 @@ Em produção, separe por domínio (facilita RBAC, custos, operação e governan
 
 ### 4.2 Tags recomendadas (prod)
 
-- `Project=erp-core`
+- `Project=...`
 - `BusinessUnit=...`
 - `Compliance=lgpd` *(se aplicável)*
 - `ServiceTier=standard|premium`
 - `Repository=github:org/repo`
 - `CreatedOn=YYYY-MM-DD`
+- `SharedService=true|false`
 
-### 4.3 Exemplo de tags por RG (modelo)
+### 4.3 Modelo de tags por tipo de RG (exemplos)
 
-Use o mesmo “núcleo” e mude `Component`.
+#### Shared AppSvc — `rg-shared-appsvc-prod-cac-001`
+```text
+Application=shared
+Environment=prod
+Owner=platform-team
+CostCenter=cc-platform-001
+ManagedBy=iac
+DataClassification=internal
+Criticality=high
+Component=compute
+SharedService=true
+SupportGroup=cloud-ops
+ContactEmail=suporte@empresa.com
+Project=platform
+CreatedOn=2026-01-30
+```
 
-**Exemplo para `rg-erp-data-prod-cac-001`:**
+#### ERP Front — `rg-erp-front-prod-cac-001`
 ```text
 Application=erp
 Environment=prod
-Owner=platform-team
+Owner=time-erp
 CostCenter=cc-erp-001
+ManagedBy=iac
+DataClassification=internal
+Criticality=high
+Component=front
+SharedService=false
+SupportGroup=cloud-ops
+ContactEmail=suporte@empresa.com
+Project=erp-core
+CreatedOn=2026-01-30
+```
+
+#### Ecommerce Data — `rg-ecom-data-prod-cac-001`
+```text
+Application=ecom
+Environment=prod
+Owner=time-ecom
+CostCenter=cc-ecom-001
 ManagedBy=iac
 DataClassification=confidential
 Criticality=high
 Component=data
+SharedService=false
 SupportGroup=cloud-ops
 ContactEmail=suporte@empresa.com
-Project=erp-core
+Project=ecom-core
 Compliance=lgpd
-ServiceTier=standard
 CreatedOn=2026-01-30
 ```
 
@@ -123,42 +177,65 @@ CreatedOn=2026-01-30
 
 ## 5) Criar recursos (com nomes + tags)
 
-> **Recomendação didática:** crie primeiro Shared (logs/insights), depois Apps, depois Dados.
+> **Recomendação didática:** crie primeiro os RGs + tags, depois RBAC, depois Shared (observabilidade + ASP), depois Apps, depois Dados.
 
-### 5.1 Shared / Observability (`rg-erp-shared-prod-cac-001`)
+### 5.1 Shared / Observability (`rg-shared-observ-prod-cac-001`)
 
-- Log Analytics Workspace: `log-erp-prod-cac-001`
-- App Insights Front: `appi-erp-front-prod-cac-001`
-- App Insights API: `appi-erp-api-prod-cac-001`
-- *(Opcional)* Key Vault: `kv-erp-prod-cac-001`
+- Log Analytics Workspace: `log-shared-prod-cac-001`
+- App Insights ERP Front: `appi-erp-front-prod-cac-001`
+- App Insights ERP API: `appi-erp-api-prod-cac-001`
+- App Insights Ecom Front: `appi-ecom-front-prod-cac-001`
+- App Insights Ecom API: `appi-ecom-api-prod-cac-001`
+- *(Opcional)* Action Group: `ag-shared-prod-cac-001`
+- *(Opcional)* Key Vault: `kv-shared-prod-cac-001`
 
-**Tags adicionais sugeridas:**
-- `Component=shared`
+### 5.2 Compute compartilhado — App Service Plan (Shared)
 
-### 5.2 Apps
+- **RG:** `rg-shared-appsvc-prod-cac-001`
+- **App Service Plan:** `asp-shared-prod-cac-001`
 
-**App Service Plan**  
-Se for compartilhado por front+api, você pode colocá-lo em `rg-erp-front...` (mais simples) ou `rg-erp-shared...` (mais corporativo).  
-Sugestão para aula: **colocar no RG do front**.
+> **Dica de aula (CAF):** explique que o ASP é um **pool de compute** (capacidade compartilhada).  
+> O custo “base” fica no ASP, e as apps são “consumidoras” dessa capacidade.
 
-- RG: `rg-erp-front-prod-cac-001`
-- App Service Plan: `asp-erp-prod-cac-001`
+### 5.3 Apps — ERP
 
 **WebApp Front**
 - RG: `rg-erp-front-prod-cac-001`
 - WebApp: `app-erp-front-prod-cac-001`
-- Tags: `Component=front`
+- App Service Plan: `asp-shared-prod-cac-001` *(no RG shared)*
+- Tags: `Application=erp`, `Component=front`
 
 **WebApp API**
 - RG: `rg-erp-api-prod-cac-001`
 - WebApp: `app-erp-api-prod-cac-001`
-- Tags: `Component=api`
+- App Service Plan: `asp-shared-prod-cac-001`
+- Tags: `Application=erp`, `Component=api`
 
-### 5.3 Dados (`rg-erp-data-prod-cac-001`)
+### 5.4 Apps — Ecommerce
 
+**WebApp Front**
+- RG: `rg-ecom-front-prod-cac-001`
+- WebApp: `app-ecom-front-prod-cac-001`
+- App Service Plan: `asp-shared-prod-cac-001`
+- Tags: `Application=ecom`, `Component=front`
+
+**WebApp API**
+- RG: `rg-ecom-api-prod-cac-001`
+- WebApp: `app-ecom-api-prod-cac-001`
+- App Service Plan: `asp-shared-prod-cac-001`
+- Tags: `Application=ecom`, `Component=api`
+
+### 5.5 Dados — separados por workload (para custo/governança)
+
+**ERP Data (`rg-erp-data-prod-cac-001`)**
 - SQL logical server: `sql-erp-prod-cac-001`
 - SQL Database: `sqldb-erp-prod-cac-001`
-- Tags: `Component=data` e, se quiser reforçar, `Criticality=high`
+- Tags: `Application=erp`, `Component=data`
+
+**Ecommerce Data (`rg-ecom-data-prod-cac-001`)**
+- SQL logical server: `sql-ecom-prod-cac-001`
+- SQL Database: `sqldb-ecom-prod-cac-001`
+- Tags: `Application=ecom`, `Component=data`
 
 ---
 
@@ -180,34 +257,42 @@ Sugestão para aula: **colocar no RG do front**.
 - **Effect recomendado:** `Deny`
 - **Tags (exemplo):** `Application`, `Environment`, `Owner`, `CostCenter`, `ManagedBy`, `DataClassification`, `Criticality`
 
-3) **Inherit tags from RG**
+3) **Allowed tag values (recomendado)**
+- **O que faz:** controla os valores aceitos para uma tag (evita “inventarem” valores)
+- **Escopo:** Subscription
+- **Effect recomendado:** `Deny` *(ou `Audit` no início)*
+- **Exemplo (Application):** permitir apenas `erp`, `ecom`, `shared`
+
+4) **Inherit tags from RG**
 - **O que faz:** herda tags do RG para recursos
 - **Escopo:** Subscription
 - **Effect recomendado:** `Modify`
 
-4) **App Service — HTTPS only**
+5) **App Service — HTTPS only**
 - **O que faz:** exige HTTPS
 - **Escopo:** Subscription *(ou RGs de apps)*
 - **Effect recomendado:** `Deny`
 
-5) **Diagnostic settings via DeployIfNotExists (DINE)**
+6) **Diagnostic settings via DeployIfNotExists (DINE)**
 - **O que faz:** configura logs/métricas para Log Analytics automaticamente
 - **Escopo:** Subscription
 - **Effect recomendado:** `DeployIfNotExists`
-- **Destino:** `log-erp-prod-cac-001`
+- **Destino:** `log-shared-prod-cac-001`
 
-6) **Deny public IP (opcional em prod)**
+7) **Deny public IP (opcional em prod)**
 - **O que faz:** reduz exposição bloqueando Public IP
 - **Escopo:** Subscription
 - **Effect recomendado:** `Deny` *(ou `Audit` se houver exceções)*
 
-> **Dica de organização:** crie uma **Initiative** chamada `CAF-Prod-Baseline` com os itens 1 a 5 (e 6 opcional).
+> **Dica de organização:** crie uma **Initiative** chamada `CAF-Prod-Baseline` com os itens 1,2,4,5,6 (e 3/7 opcionais).
 
 ### 6.2 Policies no escopo RG de Dados (mais rígido)
 
-7) **SQL — Public network access disabled**
+8) **SQL — Public network access disabled**
 - **O que faz:** bloqueia acesso público ao SQL
-- **Escopo:** `rg-erp-data-prod-cac-001`
+- **Escopo:** aplicar nos RGs de dados:
+  - `rg-erp-data-prod-cac-001`
+  - `rg-ecom-data-prod-cac-001`
 - **Effect recomendado:** `Deny`
 - **Pré-requisito:** Private Endpoint + DNS privado *(senão você pode travar a aplicação)*
 
@@ -217,14 +302,51 @@ Sugestão para aula: **colocar no RG do front**.
 
 Em produção, prefira **RBAC por grupos**, não por usuários.
 
-### 7.1 Grupos recomendados
+### 7.1 Grupos recomendados (plataforma + workloads)
 
-- `grp-erp-prod-admin` *(professor/responsável — poucas pessoas)*
-- `grp-erp-prod-dev` *(time app/deploy)*
-- `grp-erp-prod-ops` *(operação/monitoramento)*
-- `grp-erp-prod-dba` *(dados)*
-- `grp-erp-prod-secops` *(auditoria/segurança — leitura)*
-- `grp-erp-prod-finops` *(custos/budgets)*
+**Plataforma / Shared**
+- `grp-shared-prod-platform-admin` *(poucas pessoas)*
+- `grp-shared-prod-ops` *(operação/observabilidade)*
+- `grp-shared-prod-secops` *(auditoria/segurança)*
+- `grp-shared-prod-finops` *(custos/budgets)*
+
+**ERP**
+- `grp-erp-prod-dev`
+- `grp-erp-prod-dba`
+
+**Ecommerce**
+- `grp-ecom-prod-dev`
+- `grp-ecom-prod-dba`
+
+---
+
+### 7.2 Criar usuários fictícios (um por grupo) e associar aos grupos
+
+Para o laboratório ficar bem didático, crie **1 usuário fictício para cada grupo**. Assim você consegue **testar RBAC na prática** (logando com cada usuário e validando o que ele consegue ou não consegue fazer).
+
+> **Observação:** em muitos tenants, criar usuários pode exigir licenças/permissionamento. Para aula, você pode:
+> - criar usuários “cloud-only” sem licença (quando permitido), ou  
+> - usar contas existentes e apenas **adicionar/remover** dos grupos durante o lab.
+
+#### 7.2.1 Usuários sugeridos (genéricos)
+
+| Usuário (Display Name) | UPN (exemplo) | Deve entrar no grupo | Objetivo do teste |
+|---|---|---|---|
+| `SHARED - Admin - 01` | `shared.admin.01@SEU-DOMINIO.com` | `grp-shared-prod-platform-admin` | validar controle total (apenas 1–2 pessoas) |
+| `SHARED - Ops - 01` | `shared.ops.01@SEU-DOMINIO.com` | `grp-shared-prod-ops` | operar logs/alerts/observabilidade |
+| `SHARED - SecOps - 01` | `shared.secops.01@SEU-DOMINIO.com` | `grp-shared-prod-secops` | visibilidade/auditoria (Reader/Monitoring Reader) |
+| `SHARED - FinOps - 01` | `shared.finops.01@SEU-DOMINIO.com` | `grp-shared-prod-finops` | custos/budgets sem alterar recursos |
+| `ERP - Dev - 01` | `erp.dev.01@SEU-DOMINIO.com` | `grp-erp-prod-dev` | publicar/configurar apps do ERP |
+| `ERP - DBA - 01` | `erp.dba.01@SEU-DOMINIO.com` | `grp-erp-prod-dba` | administrar recurso SQL do ERP |
+| `ECOM - Dev - 01` | `ecom.dev.01@SEU-DOMINIO.com` | `grp-ecom-prod-dev` | publicar/configurar apps do Ecommerce |
+| `ECOM - DBA - 01` | `ecom.dba.01@SEU-DOMINIO.com` | `grp-ecom-prod-dba` | administrar recurso SQL do Ecommerce |
+
+#### 7.2.2 Passo a passo no portal (Microsoft Entra ID)
+
+1. Acesse **Microsoft Entra ID** → **Users** → **New user** → **Create new user**  
+2. Preencha **Display name** e **UPN** (use os exemplos da tabela)  
+3. Defina a senha inicial (anote para o lab)  
+4. Após criar o usuário, vá em **Groups** → selecione o grupo → **Members** → **Add members** → adicione o usuário correspondente
 
 ---
 
@@ -234,74 +356,79 @@ Em produção, prefira **RBAC por grupos**, não por usuários.
 
 | Grupo | Role | Escopo | Observação |
 |---|---|---|---|
-| `grp-erp-prod-admin` | Owner | Subscription | apenas 1–2 pessoas |
-| `grp-erp-prod-finops` | Cost Management Reader | Subscription | custos e budgets globais |
-| `grp-erp-prod-secops` | Reader *(ou Monitoring Reader)* | Subscription | visibilidade sem alteração |
-| `grp-erp-prod-ops` *(opcional)* | Reader | Subscription | visão geral (se necessário) |
+| `grp-shared-prod-platform-admin` | Owner | Subscription | apenas 1–2 pessoas |
+| `grp-shared-prod-finops` | Cost Management Reader | Subscription | custos e budgets globais |
+| `grp-shared-prod-secops` | Reader *(ou Monitoring Reader)* | Subscription | visibilidade sem alteração |
 
-### 8.2 RGs de Apps
+### 8.2 Shared — Observabilidade
 
-**RG Front — `rg-erp-front-prod-cac-001`**
+**RG `rg-shared-observ-prod-cac-001`**
+- `grp-shared-prod-ops` → **Log Analytics Contributor** → RG
+- `grp-shared-prod-ops` → **Application Insights Component Contributor** → RG
+- `grp-shared-prod-secops` → **Monitoring Reader** → RG
+- `grp-shared-prod-finops` → **Reader** → RG *(para análise de custo, se necessário)*
 
-| Grupo | Role | Escopo | Por quê |
-|---|---|---|---|
-| `grp-erp-prod-dev` | Website Contributor *(ou Contributor)* | RG | deploy e configuração do front |
-| `grp-erp-prod-ops` | Reader | RG | troubleshooting básico |
-| `grp-erp-prod-secops` | Reader | RG | auditoria/inspeção |
-| `grp-erp-prod-finops` | Reader | RG | análise de custo por RG |
+### 8.3 Shared — App Service Plan
 
-**RG API — `rg-erp-api-prod-cac-001`** (mesma lógica)
+**RG `rg-shared-appsvc-prod-cac-001`**
+- `grp-shared-prod-platform-admin` → **Contributor** *(ou Owner via subscription)* → RG *(administra o ASP)*
+- `grp-erp-prod-dev` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
+- `grp-ecom-prod-dev` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
+- `grp-shared-prod-finops` → **Reader** → RG *(custo do ASP fica aqui)*
 
-| Grupo | Role | Escopo | Por quê |
-|---|---|---|---|
-| `grp-erp-prod-dev` | Website Contributor *(ou Contributor)* | RG | deploy e configuração da API |
-| `grp-erp-prod-ops` | Reader | RG | troubleshooting |
-| `grp-erp-prod-secops` | Reader | RG | auditoria |
-| `grp-erp-prod-finops` | Reader | RG | custos |
+> **Nota didática:** para criar WebApp usando um ASP em outro RG, o time precisa **ler** o ASP.
 
-> **Nota:** Website Contributor atua no App Service, mas **não garante** permissões de rede. Para VNet Integration, normalmente são necessárias permissões adicionais na VNet/Subnet.
+### 8.4 Apps — ERP
 
-### 8.3 RG Data — `rg-erp-data-prod-cac-001`
+**RG `rg-erp-front-prod-cac-001`**
+- `grp-erp-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
 
-| Grupo | Role | Escopo | Por quê |
-|---|---|---|---|
-| `grp-erp-prod-dba` | SQL DB Contributor *(e/ou SQL Server Contributor)* | RG | administrar SQL (recurso) |
-| `grp-erp-prod-dev` | Reader | RG | dev normalmente não administra banco no Azure |
-| `grp-erp-prod-ops` | Reader | RG | incidentes/investigação |
-| `grp-erp-prod-secops` | Reader | RG | auditoria |
-| `grp-erp-prod-finops` | Reader | RG | custos do banco |
+**RG `rg-erp-api-prod-cac-001`** (mesma lógica)
+- `grp-erp-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
+
+### 8.5 Apps — Ecommerce
+
+**RG `rg-ecom-front-prod-cac-001`**
+- `grp-ecom-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
+
+**RG `rg-ecom-api-prod-cac-001`** (mesma lógica)
+- `grp-ecom-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
+
+### 8.6 Dados — separados por workload
+
+**RG `rg-erp-data-prod-cac-001`**
+- `grp-erp-prod-dba` → **SQL DB Contributor** *(e/ou SQL Server Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
+
+**RG `rg-ecom-data-prod-cac-001`**
+- `grp-ecom-prod-dba` → **SQL DB Contributor** *(e/ou SQL Server Contributor)* → RG
+- `grp-shared-prod-ops` → **Reader** → RG
+- `grp-shared-prod-secops` → **Reader** → RG
 
 > Gancho didático: **RBAC (management plane)** ≠ permissões **dentro do SQL (data plane)**.
-
-### 8.4 RG Shared — `rg-erp-shared-prod-cac-001`
-
-| Grupo | Role | Escopo | Por quê |
-|---|---|---|---|
-| `grp-erp-prod-ops` | Log Analytics Contributor | RG | operar logs/workspace |
-| `grp-erp-prod-ops` | Application Insights Component Contributor | RG | operar App Insights |
-| `grp-erp-prod-secops` | Monitoring Reader | RG | visibilidade/auditoria |
-| `grp-erp-prod-dev` | Reader | RG | leitura de telemetria |
-| `grp-erp-prod-finops` | Reader | RG | custo shared |
-
-### 8.5 RG Net (se usar rede) — `rg-erp-net-prod-cac-001`
-
-| Grupo | Role | Escopo | Por quê |
-|---|---|---|---|
-| `grp-erp-prod-ops` | Network Contributor | RG | operar rede |
-| `grp-erp-prod-dev` | Reader | RG | visibilidade/consulta |
-| `grp-erp-prod-secops` | Reader | RG | auditoria |
 
 ---
 
 ## 9) Sequência recomendada da aula (cronológica)
 
 1. **Criar RGs** e aplicar **tags** no nível RG.
-2. Criar **grupos no Entra ID** e aplicar **RBAC** por RG.
-3. Criar **Shared/Observability** (Log Analytics + App Insights).
-4. Criar **App Service Plan + WebApps** (front + api).
-5. Criar **SQL Server + SQL Database**.
-6. Aplicar **Azure Policies** (começar `Audit`, demonstrar compliance, evoluir para `Deny/Modify/DINE`).
-7. Validar:
+2. Criar **grupos no Entra ID** e (opcional) **usuários fictícios**.
+3. Aplicar **RBAC** por RG (evitar “subscription-wide” para todos).
+4. Criar **Shared Observability** (Log Analytics + App Insights).
+5. Criar **App Service Plan shared**.
+6. Criar os **WebApps** (ERP + Ecommerce) usando o ASP shared.
+7. Criar **SQL Server + SQL DB** separados por workload.
+8. Aplicar **Azure Policies** (começar `Audit`, demonstrar compliance, evoluir para `Deny/Modify/DINE`).
+9. Validar:
    - tags herdadas,
    - compliance de policies,
    - permissões por grupos,
@@ -318,6 +445,7 @@ Em produção, prefira **RBAC por grupos**, não por usuários.
 ### Tags
 - [ ] RGs têm as tags obrigatórias.
 - [ ] Recursos herdaram tags via Policy (Modify) ou foram aplicadas manualmente.
+- [ ] `Application` usa apenas `erp|ecom|shared` (se houver policy de allowed values).
 
 ### Policies
 - [ ] `Allowed locations` aplicado (subscription).
@@ -327,12 +455,12 @@ Em produção, prefira **RBAC por grupos**, não por usuários.
 
 ### RBAC
 - [ ] Grupos Entra foram criados.
+- [ ] Devs conseguem criar WebApps usando o ASP shared (Reader no RG do ASP).
 - [ ] RBAC aplicado em RGs (não “subscription-wide” para todos).
-- [ ] Dev não tem Owner na subscription.
-- [ ] FinOps consegue ver custos, mas não altera recursos.
+- [ ] FinOps consegue ver custos do ASP (RG shared) e por workload (RGs das apps/dados).
 
 ### Observabilidade
-- [ ] App Insights configurado para front e api.
+- [ ] App Insights configurado para front e api (ERP + Ecommerce).
 - [ ] Logs/metrics chegam no Log Analytics.
 
 ---
@@ -340,23 +468,34 @@ Em produção, prefira **RBAC por grupos**, não por usuários.
 ## 11) Mini-resumo (nomes finais)
 
 ### Resource Groups
-- `rg-erp-shared-prod-cac-001`
+- `rg-shared-observ-prod-cac-001`
+- `rg-shared-appsvc-prod-cac-001`
 - `rg-erp-front-prod-cac-001`
 - `rg-erp-api-prod-cac-001`
+- `rg-ecom-front-prod-cac-001`
+- `rg-ecom-api-prod-cac-001`
 - `rg-erp-data-prod-cac-001`
-- `rg-erp-net-prod-cac-001` *(opcional)*
+- `rg-ecom-data-prod-cac-001`
+- `rg-shared-net-prod-cac-001` *(opcional)*
 
-### Recursos
-- `log-erp-prod-cac-001`
+### Recursos (principais)
+- `log-shared-prod-cac-001`
 - `appi-erp-front-prod-cac-001`
 - `appi-erp-api-prod-cac-001`
-- `asp-erp-prod-cac-001`
+- `appi-ecom-front-prod-cac-001`
+- `appi-ecom-api-prod-cac-001`
+- `asp-shared-prod-cac-001`
 - `app-erp-front-prod-cac-001`
 - `app-erp-api-prod-cac-001`
-- `sql-erp-prod-cac-001`
-- `sqldb-erp-prod-cac-001`
+- `app-ecom-front-prod-cac-001`
+- `app-ecom-api-prod-cac-001`
+- `sql-erp-prod-cac-001` / `sqldb-erp-prod-cac-001`
+- `sql-ecom-prod-cac-001` / `sqldb-ecom-prod-cac-001`
 
 ---
 
 ### Observação final (importante)
-Em produção, **Policy + RBAC + Tags** viram “governança contínua”. O ganho didático é mostrar que CAF não é só teoria: ele vira **estrutura**, **processo**, **padrão** e **controle automatizado**.
+Quando você **compartilha** um App Service Plan:
+- o custo “base” fica no **ASP (shared)**,
+- e o rateio costuma ser feito por **tags** e/ou critérios internos (FinOps).
+Separar **dados por workload** ajuda a ter visibilidade de custo e governança clara em produção.
