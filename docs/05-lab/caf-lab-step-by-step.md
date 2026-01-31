@@ -6,7 +6,9 @@ Este documento reúne um **passo a passo completo** para uma aula prática basea
 > - Região base: **Canada Central**
 > - 1 Subscription
 > - **1 App Service Plan (Shared)** para reduzir custo (compute compartilhado)
-> - 4 WebApps: **ERP Front**, **ERP API**, **Ecommerce Front**, **Ecommerce API**
+> - 3 WebApps: **ERP Front**, **ERP API**, **Ecommerce Front**, **Ecommerce API**
+> - **1 Virtual Machine (ERP)** 
+> - 1 VM: **ERP Front**
 > - **Dados separados por workload** (para rastreio de custos/governança):
 >   - ERP: Azure SQL Server + DB
 >   - Ecommerce: Azure SQL Server + DB
