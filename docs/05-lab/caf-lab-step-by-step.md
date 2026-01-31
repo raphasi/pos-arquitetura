@@ -483,10 +483,10 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 
 ### Recursos (principais)
 - `log-shared-prod-cac-001`
-- `appi-erp-front-prod-cac-001`
-- `appi-erp-api-prod-cac-001`
-- `appi-ecom-front-prod-cac-001`
-- `appi-ecom-api-prod-cac-001`
+- `app-erp-front-prod-cac-001`
+- `app-erp-api-prod-cac-001`
+- `app-ecom-front-prod-cac-001`
+- `app-ecom-api-prod-cac-001`
 - `asp-shared-prod-cac-001`
 - `vm-erp-front-prod-cac-001`
 - `app-erp-api-prod-cac-001`
