@@ -333,13 +333,19 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | Usuário (Display Name) | UPN (exemplo) | Deve entrar no grupo | Objetivo do teste |
 |---|---|---|---|
 | `SHARED - Admin - 01` | `shared.admin.01@SEU-DOMINIO.com` | `grp-shared-prod-platform-admin` | validar controle total (apenas 1–2 pessoas) |
-| `SHARED - Ops - 01` | `shared.ops.01@SEU-DOMINIO.com` | `grp-shared-prod-ops` | operar logs/alerts/observabilidade |
+| `SHARED - Ops - 01` | `shared.ops.01@SEU-DOMINIO.com` | `grp-shared-prod-plataform-ops` | operar recursos em geral |
+| `SHARED - Obs - 01` | `shared.obs.01@SEU-DOMINIO.com` | `grp-shared-prod-obs` | operar logs/alerts/observabilidade |
 | `SHARED - SecOps - 01` | `shared.secops.01@SEU-DOMINIO.com` | `grp-shared-prod-secops` | visibilidade/auditoria (Reader/Monitoring Reader) |
 | `SHARED - FinOps - 01` | `shared.finops.01@SEU-DOMINIO.com` | `grp-shared-prod-finops` | custos/budgets sem alterar recursos |
-| `ERP - Dev - 01` | `erp.dev.01@SEU-DOMINIO.com` | `grp-erp-prod-dev` | publicar/configurar apps do ERP |
+| `SHARED - Network - 01` | `shared.network.01@SEU-DOMINIO.com` | `grp-shared-prod-network` | operar recursos de rede |
+| `SHARED - App Plan - 01` | `shared.appplan.01@SEU-DOMINIO.com` | `grp-shared-prod-asp` | operar App Service Plan |
+| `ERP - Dev - 01` | `erp.front.01@SEU-DOMINIO.com` | `grp-erp-prod-front` | publicar/configurar apps Frontend do ERP |
+| `ERP - Dev - 02` | `erp.api.02@SEU-DOMINIO.com` | `grp-erp-prod-api` | publicar/configurar apps Backend do ERP |
 | `ERP - DBA - 01` | `erp.dba.01@SEU-DOMINIO.com` | `grp-erp-prod-dba` | administrar recurso SQL do ERP |
-| `ECOM - Dev - 01` | `ecom.dev.01@SEU-DOMINIO.com` | `grp-ecom-prod-dev` | publicar/configurar apps do Ecommerce |
+| `ECOM - Dev - 01` | `ecom.front.01@SEU-DOMINIO.com` | `grp-ecom-prod-front` | publicar/configurar apps FrontEnd do Ecommerce |
+| `ECOM - Dev - 02` | `ecom.api.01@SEU-DOMINIO.com` | `grp-ecom-prod-api` | publicar/configurar apps Backend do Ecommerce |
 | `ECOM - DBA - 01` | `ecom.dba.01@SEU-DOMINIO.com` | `grp-ecom-prod-dba` | administrar recurso SQL do Ecommerce |
+
 
 #### 7.2.2 Passo a passo no portal (Microsoft Entra ID)
 
@@ -357,64 +363,59 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | Grupo | Role | Escopo | Observação |
 |---|---|---|---|
 | `grp-shared-prod-platform-admin` | Owner | Subscription | apenas 1–2 pessoas |
+| `grp-shared-prod-platform-ops` | Contributor | Subscription | poucas pessoas |
 | `grp-shared-prod-finops` | Cost Management Reader | Subscription | custos e budgets globais |
 | `grp-shared-prod-secops` | Reader *(ou Monitoring Reader)* | Subscription | visibilidade sem alteração |
+| `grp-shared-prod-obs` | Reader | Subscription | observabilidade |
+
 
 ### 8.2 Shared — Observabilidade
 
 **RG `rg-shared-observ-prod-cac-001`**
-- `grp-shared-prod-ops` → **Log Analytics Contributor** → RG
-- `grp-shared-prod-ops` → **Application Insights Component Contributor** → RG
+- `grp-shared-prod-obs` → **Log Analytics Contributor** → RG
+- `grp-shared-prod-obs` → **Application Insights Component Contributor** → RG
 - `grp-shared-prod-secops` → **Monitoring Reader** → RG
 - `grp-shared-prod-finops` → **Reader** → RG *(para análise de custo, se necessário)*
 
 ### 8.3 Shared — App Service Plan
 
 **RG `rg-shared-appsvc-prod-cac-001`**
-- `grp-shared-prod-platform-admin` → **Contributor** *(ou Owner via subscription)* → RG *(administra o ASP)*
-- `grp-erp-prod-dev` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
-- `grp-ecom-prod-dev` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
-- `grp-shared-prod-finops` → **Reader** → RG *(custo do ASP fica aqui)*
+- `grp-shared-prod-asp` → **Contributor** → RG *(administra o ASP)*
+- `grp-ecom-prod-front` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
+- `grp-ecom-prod-api` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
+- `grp-erp-prod-api` → **Reader** → RG *(para conseguir selecionar o ASP ao criar o WebApp)*
 
 > **Nota didática:** para criar WebApp usando um ASP em outro RG, o time precisa **ler** o ASP.
 
 ### 8.4 Apps — ERP
 
 **RG `rg-erp-front-prod-cac-001`**
-- `grp-erp-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
+- `grp-erp-prod-front` → **Website Contributor** *(ou Contributor)* → RG
 
 **RG `rg-erp-api-prod-cac-001`** (mesma lógica)
-- `grp-erp-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
+- `grp-erp-prod-api` → **Website Contributor** *(ou Contributor)* → RG
 
 ### 8.5 Apps — Ecommerce
 
 **RG `rg-ecom-front-prod-cac-001`**
-- `grp-ecom-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
+- `grp-ecom-prod-front` → **Website Contributor** *(ou Contributor)* → RG
 
 **RG `rg-ecom-api-prod-cac-001`** (mesma lógica)
-- `grp-ecom-prod-dev` → **Website Contributor** *(ou Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
+- `grp-ecom-prod-api` → **Website Contributor** *(ou Contributor)* → RG
 
 ### 8.6 Dados — separados por workload
 
 **RG `rg-erp-data-prod-cac-001`**
 - `grp-erp-prod-dba` → **SQL DB Contributor** *(e/ou SQL Server Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
 
 **RG `rg-ecom-data-prod-cac-001`**
 - `grp-ecom-prod-dba` → **SQL DB Contributor** *(e/ou SQL Server Contributor)* → RG
-- `grp-shared-prod-ops` → **Reader** → RG
-- `grp-shared-prod-secops` → **Reader** → RG
 
-> Gancho didático: **RBAC (management plane)** ≠ permissões **dentro do SQL (data plane)**.
+### 8.7 Network — Isolamento de rede
+
+**RG `rg-shared-net-prod-cac-001`**
+- `grp-shared-prod-network` → **Network Contributor** *(e/ou SQL Server Contributor)* → RG
+
 
 ---
 
@@ -476,7 +477,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 - `rg-ecom-api-prod-cac-001`
 - `rg-erp-data-prod-cac-001`
 - `rg-ecom-data-prod-cac-001`
-- `rg-shared-net-prod-cac-001` *(opcional)*
+- `rg-shared-net-prod-cac-001` 
 
 ### Recursos (principais)
 - `log-shared-prod-cac-001`
@@ -485,7 +486,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 - `appi-ecom-front-prod-cac-001`
 - `appi-ecom-api-prod-cac-001`
 - `asp-shared-prod-cac-001`
-- `app-erp-front-prod-cac-001`
+- `vm-erp-front-prod-cac-001`
 - `app-erp-api-prod-cac-001`
 - `app-ecom-front-prod-cac-001`
 - `app-ecom-api-prod-cac-001`
