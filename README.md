@@ -43,3 +43,12 @@ Exemplos de nomes:
 
 Sugestão de organização por “pilares” (CAF):
 
+```text
+docs/
+  01-naming/
+  02-tags/
+  03-policy/
+  04-rbac/
+  05-lab/
+
+
