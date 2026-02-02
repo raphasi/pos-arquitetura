@@ -130,7 +130,6 @@ CostCenter=pos-disciplina03
 Criticality=high
 SharedService=true
 SupportGroup=appsvc-cloud
-CreatedOn=2026-02-01
 ```
 
 #### Shared WebApp — `rg-shared-webapp-prod-cac-001`
@@ -142,7 +141,6 @@ CostCenter=pos-disciplina03
 Criticality=high
 SharedService=true
 SupportGroup=webapp-cloud
-CreatedOn=2026-02-01
 ```
 
 #### Shared Observabilidade — `rg-shared-observ-prod-cac-001`
@@ -154,7 +152,6 @@ CostCenter=pos-disciplina03
 Criticality=high
 SharedService=true
 SupportGroup=observ-cloud
-CreatedOn=2026-02-01
 ```
 
 #### Shared Network — `rg-shared-net-prod-cac-001`
@@ -166,7 +163,6 @@ CostCenter=pos-disciplina03
 Criticality=high
 SharedService=true
 SupportGroup=net-cloud
-CreatedOn=2026-02-01
 ```
 
 #### ERP Front — `rg-erp-front-prod-cac-001`
@@ -180,7 +176,6 @@ Component=frontend
 SharedService=false
 SupportGroup=erp-cloud-front
 Project=erp-core-front
-CreatedOn=2026-02-01
 ```
 
 #### ERP API — `rg-erp-api-prod-cac-001`
@@ -194,7 +189,6 @@ Component=api
 SharedService=false
 SupportGroup=erp-cloud-api
 Project=erp-core-api
-CreatedOn=2026-02-01
 ```
 
 #### ERP Data — `rg-erp-data-prod-cac-001`
@@ -208,7 +202,6 @@ Component=data
 SharedService=false
 SupportGroup=erp-cloud-data
 Project=erp-core-data
-CreatedOn=2026-02-01
 ```
 
 #### Ecommerce Front — `rg-ecom-front-prod-cac-001`
@@ -222,7 +215,6 @@ Component=frontend
 SharedService=false
 SupportGroup=ecom-cloud-front
 Project=ecom-core-front
-CreatedOn=2026-02-01
 ```
 
 #### Ecommerce API — `rg-ecom-api-prod-cac-001`
@@ -236,7 +228,6 @@ Component=api
 SharedService=false
 SupportGroup=ecom-cloud-api
 Project=ecom-core-api
-CreatedOn=2026-02-01
 ```
 
 #### Ecommerce Data — `rg-ecom-data-prod-cac-001`
@@ -250,7 +241,6 @@ Component=data
 SharedService=false
 SupportGroup=ecom-cloud-data
 Project=ecom-erp-core-data
-CreatedOn=2026-02-01
 ```
 
 ---
