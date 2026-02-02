@@ -318,7 +318,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | Usuário (Display Name) | UPN (exemplo) | Deve entrar no grupo | Objetivo do teste |
 |---|---|---|---|
 | `SHARED - Admin - 01` | `shared.admin.01@SEU-DOMINIO.com` | `grp-shared-prod-platform-admin` | validar controle total (apenas 1–2 pessoas) |
-| `SHARED - Ops - 01` | `shared.ops.01@SEU-DOMINIO.com` | `grp-shared-prod-plataform-ops` | operar recursos em geral |
+| `SHARED - Ops - 01` | `shared.ops.01@SEU-DOMINIO.com` | `grp-shared-prod-ops` | operar recursos em geral |
 | `SHARED - Obs - 01` | `shared.obs.01@SEU-DOMINIO.com` | `grp-shared-prod-obs` | operar logs/alerts/observabilidade |
 | `SHARED - SecOps - 01` | `shared.secops.01@SEU-DOMINIO.com` | `grp-shared-prod-secops` | visibilidade/auditoria (Reader/Monitoring Reader) |
 | `SHARED - FinOps - 01` | `shared.finops.01@SEU-DOMINIO.com` | `grp-shared-prod-finops` | custos/budgets sem alterar recursos |
@@ -328,7 +328,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | `ERP - Dev - 02` | `erp.api.02@SEU-DOMINIO.com` | `grp-erp-prod-api` | publicar/configurar apps Backend do ERP |
 | `ERP - DBA - 01` | `erp.dba.01@SEU-DOMINIO.com` | `grp-erp-prod-dba` | administrar recurso SQL do ERP |
 | `ECOM - Dev - 01` | `ecom.front.01@SEU-DOMINIO.com` | `grp-ecom-prod-front` | publicar/configurar apps FrontEnd do Ecommerce |
-| `ECOM - Dev - 02` | `ecom.api.01@SEU-DOMINIO.com` | `grp-ecom-prod-api` | publicar/configurar apps Backend do Ecommerce |
+| `ECOM - Dev - 02` | `ecom.api.02@SEU-DOMINIO.com` | `grp-ecom-prod-api` | publicar/configurar apps Backend do Ecommerce |
 | `ECOM - DBA - 01` | `ecom.dba.01@SEU-DOMINIO.com` | `grp-ecom-prod-dba` | administrar recurso SQL do Ecommerce |
 
 
