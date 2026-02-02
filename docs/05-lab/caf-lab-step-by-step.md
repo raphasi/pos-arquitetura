@@ -246,56 +246,34 @@ Project=ecom-erp-core-data
 ---
 
 
-## 6) Azure Policy (baseline de produção)
+## 5) Azure Policy (baseline de produção)
 
-> Estratégia recomendada: **Audit** por poucos minutos para demonstrar compliance → em seguida aplicar **Deny/Modify/DINE** conforme o caso.
-
-### 6.1 Policies no escopo Subscription (baseline do ambiente)
+### 5.1 Policies no escopo Subscription (baseline do ambiente)
 
 1) **Allowed locations**
 - **O que faz:** só permite criação em regiões aprovadas
 - **Escopo:** Subscription
 - **Effect recomendado:** `Deny`
-- **Parâmetro:** permitir apenas `canadacentral`
+- **Parâmetro:** permitir apenas `canadacentral` *ou regiões que você irá trabalhar*
 
-2) **Require tags (tags obrigatórias)**
-- **O que faz:** bloqueia criação sem as tags essenciais
-- **Escopo:** Subscription
-- **Effect recomendado:** `Deny`
-- **Tags (exemplo):** `Application`, `Environment`, `Owner`, `CostCenter`, `ManagedBy`, `DataClassification`, `Criticality`
-
-3) **Allowed tag values (recomendado)**
-- **O que faz:** controla os valores aceitos para uma tag (evita “inventarem” valores)
-- **Escopo:** Subscription
-- **Effect recomendado:** `Deny` *(ou `Audit` no início)*
-- **Exemplo (Application):** permitir apenas `erp`, `ecom`, `shared`
-
-4) **Inherit tags from RG**
+2) **Inherit tags from RG**
 - **O que faz:** herda tags do RG para recursos
 - **Escopo:** Subscription
 - **Effect recomendado:** `Modify`
 
-5) **App Service — HTTPS only**
-- **O que faz:** exige HTTPS
-- **Escopo:** Subscription *(ou RGs de apps)*
+3) **Allowed virtual machine SKUs**
+- **O que faz:** define SKUs de VMs permitido
+- **Escopo:** Subscription 
 - **Effect recomendado:** `Deny`
 
-6) **Diagnostic settings via DeployIfNotExists (DINE)**
-- **O que faz:** configura logs/métricas para Log Analytics automaticamente
-- **Escopo:** Subscription
-- **Effect recomendado:** `DeployIfNotExists`
-- **Destino:** `log-shared-prod-cac-001`
+4) **Allowed storage account kinds**
+- **O que faz:** define SKUs de Storage Accounts
+- **Escopo:** Subscription 
+- **Effect recomendado:** `Deny`  
 
-7) **Deny public IP (opcional em prod)**
-- **O que faz:** reduz exposição bloqueando Public IP
-- **Escopo:** Subscription
-- **Effect recomendado:** `Deny` *(ou `Audit` se houver exceções)*
+### 5.2 Policies no escopo RG de Dados (mais rígido)
 
-> **Dica de organização:** crie uma **Initiative** chamada `CAF-Prod-Baseline` com os itens 1,2,4,5,6 (e 3/7 opcionais).
-
-### 6.2 Policies no escopo RG de Dados (mais rígido)
-
-8) **SQL — Public network access disabled**
+5) **SQL — Public network access disabled**
 - **O que faz:** bloqueia acesso público ao SQL
 - **Escopo:** aplicar nos RGs de dados:
   - `rg-erp-data-prod-cac-001`
@@ -305,11 +283,11 @@ Project=ecom-erp-core-data
 
 ---
 
-## 7) Grupos no Entra ID (para RBAC)
+## 6) Grupos no Entra ID (para RBAC)
 
 Em produção, prefira **RBAC por grupos**, não por usuários.
 
-### 7.1 Grupos recomendados (plataforma + workloads)
+### 6.1 Grupos recomendados (plataforma + workloads)
 
 **Plataforma / Shared**
 - `grp-shared-prod-platform-admin` *(poucas pessoas)*
@@ -327,7 +305,7 @@ Em produção, prefira **RBAC por grupos**, não por usuários.
 
 ---
 
-### 7.2 Criar usuários fictícios (um por grupo) e associar aos grupos
+### 6.2 Criar usuários fictícios (um por grupo) e associar aos grupos
 
 Para o laboratório ficar bem didático, crie **1 usuário fictício para cada grupo**. Assim você consegue **testar RBAC na prática** (logando com cada usuário e validando o que ele consegue ou não consegue fazer).
 
@@ -335,7 +313,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 > - criar usuários “cloud-only” sem licença (quando permitido), ou  
 > - usar contas existentes e apenas **adicionar/remover** dos grupos durante o lab.
 
-#### 7.2.1 Usuários sugeridos (genéricos)
+#### 6.2.1 Usuários sugeridos (genéricos)
 
 | Usuário (Display Name) | UPN (exemplo) | Deve entrar no grupo | Objetivo do teste |
 |---|---|---|---|
@@ -354,7 +332,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | `ECOM - DBA - 01` | `ecom.dba.01@SEU-DOMINIO.com` | `grp-ecom-prod-dba` | administrar recurso SQL do Ecommerce |
 
 
-#### 7.2.2 Passo a passo no portal (Microsoft Entra ID)
+#### 6.2.2 Passo a passo no portal (Microsoft Entra ID)
 
 1. Acesse **Microsoft Entra ID** → **Users** → **New user** → **Create new user**  
 2. Preencha **Display name** e **UPN** (use os exemplos da tabela)  
@@ -363,9 +341,9 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 
 ---
 
-## 8) RBAC (roles) — quais usar e onde aplicar
+## 7) RBAC (roles) — quais usar e onde aplicar
 
-### 8.1 Subscription (mínimo necessário)
+### 7.1 Subscription (mínimo necessário)
 
 | Grupo | Role | Escopo | Observação |
 |---|---|---|---|
