@@ -348,7 +348,7 @@ Para o laboratório ficar bem didático, crie **1 usuário fictício para cada g
 | Grupo | Role | Escopo | Observação |
 |---|---|---|---|
 | `grp-shared-prod-platform-admin` | Owner | Subscription | apenas 1–2 pessoas |
-| `grp-shared-prod-platform-ops` | Contributor | Subscription | poucas pessoas |
+| `grp-shared-prod-ops` | Contributor | Subscription | poucas pessoas |
 | `grp-shared-prod-finops` | Cost Management Reader | Subscription | custos e budgets globais |
 | `grp-shared-prod-secops` | Reader *(ou Monitoring Reader)* | Subscription | visibilidade sem alteração |
 | `grp-shared-prod-obs` | Reader | Subscription | observabilidade |
