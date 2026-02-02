@@ -105,8 +105,6 @@ Em produção, separe por domínio (facilita RBAC, custos, operação e governan
 - `Environment=prod`
 - `Owner=platform-team` *(ou `time-erp` / `time-ecom` por workload)*
 - `CostCenter=...` *(ajuste para o seu caso)*
-- `ManagedBy=iac` *(recomendado em prod; ou `manual` se for aula via portal)*
-- `DataClassification=confidential` *(ou `internal`)*
 - `Criticality=high`
 - `SupportGroup=cloud-ops`
 - `ContactEmail=suporte@empresa.com`
@@ -121,23 +119,54 @@ Em produção, separe por domínio (facilita RBAC, custos, operação e governan
 - `CreatedOn=YYYY-MM-DD`
 - `SharedService=true|false`
 
-### 4.3 Modelo de tags por tipo de RG (exemplos)
+### 4.3 Modelo de tags por tipo de RG 
 
 #### Shared AppSvc — `rg-shared-appsvc-prod-cac-001`
 ```text
 Application=shared
 Environment=prod
 Owner=platform-team
-CostCenter=cc-platform-001
-ManagedBy=iac
-DataClassification=internal
+CostCenter=pos-disciplina03
 Criticality=high
-Component=compute
 SharedService=true
-SupportGroup=cloud-ops
-ContactEmail=suporte@empresa.com
-Project=platform
-CreatedOn=2026-01-30
+SupportGroup=appsvc-cloud
+CreatedOn=2026-02-01
+```
+
+#### Shared WebApp — `rg-shared-webapp-prod-cac-001`
+```text
+Application=shared
+Environment=prod
+Owner=platform-team
+CostCenter=pos-disciplina03
+Criticality=high
+SharedService=true
+SupportGroup=webapp-cloud
+CreatedOn=2026-02-01
+```
+
+#### Shared Observabilidade — `rg-shared-observ-prod-cac-001`
+```text
+Application=shared
+Environment=prod
+Owner=platform-team
+CostCenter=pos-disciplina03
+Criticality=high
+SharedService=true
+SupportGroup=observ-cloud
+CreatedOn=2026-02-01
+```
+
+#### Shared Network — `rg-shared-net-prod-cac-001`
+```text
+Application=shared
+Environment=prod
+Owner=platform-team
+CostCenter=pos-disciplina03
+Criticality=high
+SharedService=true
+SupportGroup=net-cloud
+CreatedOn=2026-02-01
 ```
 
 #### ERP Front — `rg-erp-front-prod-cac-001`
@@ -145,16 +174,69 @@ CreatedOn=2026-01-30
 Application=erp
 Environment=prod
 Owner=time-erp
-CostCenter=cc-erp-001
-ManagedBy=iac
-DataClassification=internal
+CostCenter=pos-disciplina03
 Criticality=high
-Component=front
+Component=frontend
 SharedService=false
-SupportGroup=cloud-ops
-ContactEmail=suporte@empresa.com
-Project=erp-core
-CreatedOn=2026-01-30
+SupportGroup=erp-cloud-front
+Project=erp-core-front
+CreatedOn=2026-02-01
+```
+
+#### ERP API — `rg-erp-api-prod-cac-001`
+```text
+Application=erp
+Environment=prod
+Owner=time-erp
+CostCenter=pos-disciplina03
+Criticality=high
+Component=api
+SharedService=false
+SupportGroup=erp-cloud-api
+Project=erp-core-api
+CreatedOn=2026-02-01
+```
+
+#### ERP Data — `rg-erp-data-prod-cac-001`
+```text
+Application=erp
+Environment=prod
+Owner=time-erp
+CostCenter=pos-disciplina03
+Criticality=high
+Component=data
+SharedService=false
+SupportGroup=erp-cloud-data
+Project=erp-core-data
+CreatedOn=2026-02-01
+```
+
+#### Ecommerce Front — `rg-ecom-front-prod-cac-001`
+```text
+Application=ecom
+Environment=prod
+Owner=time-ecom
+CostCenter=pos-disciplina03
+Criticality=high
+Component=frontend
+SharedService=false
+SupportGroup=ecom-cloud-front
+Project=ecom-core-front
+CreatedOn=2026-02-01
+```
+
+#### Ecommerce API — `rg-ecom-api-prod-cac-001`
+```text
+Application=ecom
+Environment=prod
+Owner=time-ecom
+CostCenter=pos-disciplina03
+Criticality=high
+Component=api
+SharedService=false
+SupportGroup=ecom-cloud-api
+Project=ecom-core-api
+CreatedOn=2026-02-01
 ```
 
 #### Ecommerce Data — `rg-ecom-data-prod-cac-001`
@@ -162,84 +244,17 @@ CreatedOn=2026-01-30
 Application=ecom
 Environment=prod
 Owner=time-ecom
-CostCenter=cc-ecom-001
-ManagedBy=iac
-DataClassification=confidential
+CostCenter=pos-disciplina03
 Criticality=high
 Component=data
 SharedService=false
-SupportGroup=cloud-ops
-ContactEmail=suporte@empresa.com
-Project=ecom-core
-Compliance=lgpd
-CreatedOn=2026-01-30
+SupportGroup=ecom-cloud-data
+Project=ecom-erp-core-data
+CreatedOn=2026-02-01
 ```
 
 ---
 
-## 5) Criar recursos (com nomes + tags)
-
-> **Recomendação didática:** crie primeiro os RGs + tags, depois RBAC, depois Shared (observabilidade + ASP), depois Apps, depois Dados.
-
-### 5.1 Shared / Observability (`rg-shared-observ-prod-cac-001`)
-
-- Log Analytics Workspace: `log-shared-prod-cac-001`
-- App Insights ERP Front: `appi-erp-front-prod-cac-001`
-- App Insights ERP API: `appi-erp-api-prod-cac-001`
-- App Insights Ecom Front: `appi-ecom-front-prod-cac-001`
-- App Insights Ecom API: `appi-ecom-api-prod-cac-001`
-- *(Opcional)* Action Group: `ag-shared-prod-cac-001`
-- *(Opcional)* Key Vault: `kv-shared-prod-cac-001`
-
-### 5.2 Compute compartilhado — App Service Plan (Shared)
-
-- **RG:** `rg-shared-appsvc-prod-cac-001`
-- **App Service Plan:** `asp-shared-prod-cac-001`
-
-> **Dica de aula (CAF):** explique que o ASP é um **pool de compute** (capacidade compartilhada).  
-> O custo “base” fica no ASP, e as apps são “consumidoras” dessa capacidade.
-
-### 5.3 Apps — ERP
-
-**WebApp Front**
-- RG: `rg-erp-front-prod-cac-001`
-- WebApp: `app-erp-front-prod-cac-001`
-- App Service Plan: `asp-shared-prod-cac-001` *(no RG shared)*
-- Tags: `Application=erp`, `Component=front`
-
-**WebApp API**
-- RG: `rg-erp-api-prod-cac-001`
-- WebApp: `app-erp-api-prod-cac-001`
-- App Service Plan: `asp-shared-prod-cac-001`
-- Tags: `Application=erp`, `Component=api`
-
-### 5.4 Apps — Ecommerce
-
-**WebApp Front**
-- RG: `rg-ecom-front-prod-cac-001`
-- WebApp: `app-ecom-front-prod-cac-001`
-- App Service Plan: `asp-shared-prod-cac-001`
-- Tags: `Application=ecom`, `Component=front`
-
-**WebApp API**
-- RG: `rg-ecom-api-prod-cac-001`
-- WebApp: `app-ecom-api-prod-cac-001`
-- App Service Plan: `asp-shared-prod-cac-001`
-- Tags: `Application=ecom`, `Component=api`
-
-### 5.5 Dados — separados por workload (para custo/governança)
-
-**ERP Data (`rg-erp-data-prod-cac-001`)**
-- SQL logical server: `sql-erp-prod-cac-001`
-- SQL Database: `sqldb-erp-prod-cac-001`
-- Tags: `Application=erp`, `Component=data`
-
-**Ecommerce Data (`rg-ecom-data-prod-cac-001`)**
-- SQL logical server: `sql-ecom-prod-cac-001`
-- SQL Database: `sqldb-ecom-prod-cac-001`
-- Tags: `Application=ecom`, `Component=data`
-
----
 
 ## 6) Azure Policy (baseline de produção)
 
